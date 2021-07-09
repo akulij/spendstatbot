@@ -1,1 +1,0 @@
-botkey="yourbot_key"
