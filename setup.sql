@@ -9,7 +9,7 @@ CREATE TABLE costs(
 
 CREATE TABLE families(
 	id SERIAL PRIMARY KEY,
-	creator_id integer,
+	creator_id integer unique,
 	name varchar(100)
 );
 
@@ -18,4 +18,10 @@ CREATE TABLE users(
 	user_id integer unique,
 	nickname varchar(100),
 	family_id integer
+);
+
+CREATE TABLE links(
+	id SERIAL PRIMARY KEY,
+	family_id integer,
+	ref_part varchar(256)
 );

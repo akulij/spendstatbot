@@ -1,4 +1,3 @@
-# import pandas as pd
 from sqlalchemy import create_engine
 from config import user, password, ip, port, dbname
 
