@@ -1,7 +1,11 @@
-import db
 from hashlib import sha256
-from config import salt
 from time import time_ns
+from datetime import datetime
+import matplotlib.pyplot as plt
+from random import randbytes
+
+import db
+from config import salt
 
 
 def parse_message(text):
@@ -30,14 +34,16 @@ def generate_link(user_id):
     if family_name is None:
         return None
     data = family_name + salt + str(time_ns())
-    hash_result = sha256(data.encode("utf-8")).hexdigest()
-    db.append_family_link(user_id, hash_result)
+    hash_result = sha256(data.encode("utf-8") + randbytes(10)).hexdigest()
+    db.append_family_link(db.get_user_family(user_id), hash_result)
+    return hash_result
 
 
 def getcosts_message_builder(user_id, keyword, start_date, weeks=0, months=0, years=0):
     costs_list = db.get_interval_costs(user_id, start_date, weeks, months, years)
     week_sum = db.get_interval_sum(user_id, start_date, weeks, months, years)
     costs, labels = db.get_costs_statistic(user_id, start_date, weeks, months, years)
+    picture_name = None
 
     message = f"Ваши траты за {keyword}:\n" \
               if len(costs_list) else f"У вас нет трат за {keyword}"
@@ -50,18 +56,31 @@ def getcosts_message_builder(user_id, keyword, start_date, weeks=0, months=0, ye
         message += "    ...\n"
     if len(costs_list):
         message += "Всего потрачено за {}: {}руб.".format(keyword, week_sum)
+        fig, ax = plt.subplots()
+        ax.pie(costs, labels=labels, autopct="%i%%")
+        picture_name = "pieresult{}{}.png".format(datetime.now(), user_id)
+        fig.savefig(picture_name)
 
-    return message, costs, labels
+    return message, picture_name
 
 
 def family_users_getstatistic(family_id):
-    message = "Потратили за месяц:\n"
     users, totals = db.get_users_infamily_sums(family_id)
-    for user, total in zip(users, totals):
-        message += f"  {user} - {total}руб.\n"
+    picture_name = None
     family_total = db.get_family_total_in_month(family_id)
-    message += f"Всего потрачено: {family_total}руб."
-    return message
+    if family_total is None:
+        message = "За месяц ничего не потрачено"
+    else:
+        message = "Потратили за месяц:\n"
+        for user, total in zip(users, totals):
+            message += f"  {user} - {total}руб.\n"
+        message += f"Всего потрачено: {family_total}руб."
+        fig, ax = plt.subplots()
+        costs, labels = db.get_family_costs_statistic(family_id)
+        ax.pie(costs, labels=labels, autopct="%i%%")
+        picture_name = "pieresult{}{}.png".format(datetime.now(), family_id)
+        fig.savefig(picture_name)
+    return message, picture_name
 
 
 def username(message):

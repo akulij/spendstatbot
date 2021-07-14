@@ -25,7 +25,7 @@ hello_msg = """
 def dbuserexists(fn):
     async def wrapper(message):
         if not db.user_in_db(message.from_user.id):
-            db.add_new_user(message.from_user.id, usefull.username(message))
+            db.add_new_user(message.from_user.id, message.from_user.username)
         await fn(message)
     return wrapper
 
@@ -43,14 +43,9 @@ async def start(message):
     if ref_part is None:
         await message.answer(hello_msg, reply_markup=kbds.base_keyboard)
     else:
-        status = db.link_user_to_family(message.from_user.id, ref_part)
-        if status == "ADDED":
-            await message.answer(hello_msg, reply_markup=kbds.base_keyboard)
-            await message.answer("Your account linked to family successfully")
-        elif status == "CHANGED":
-            await message.answer("you have changed family successfully")
-        else:
-            await message.answer("Can't link account to this family")
+        db.link_user_to_family(message.from_user.id, ref_part)
+        await message.answer(hello_msg, reply_markup=kbds.base_keyboard)
+        await message.answer("Your account linked to family successfully")
 
 
 @dp.message_handler(commands=["familylink"])
@@ -67,7 +62,8 @@ async def familylink(message):
 async def familyremove(message):
     """Removes account from family"""
     username = usefull.parse_command(message.text)
-    status = db.remove_user_from_family(db.get_userid_by_nickname(username), db.get_family_by_admin_id(message.from_user.id))
+    status = db.remove_user_from_family(db.get_userid_by_nickname(username),
+                                        db.get_family_by_admin_id(message.from_user.id))
     if status == "OK":
         await message.answer("account removed successfully")
     elif status == "NOTINFAMILY":
@@ -96,55 +92,49 @@ async def familycreate(message):
 
 @dp.message_handler(lambda message: message.text == "Траты за неделю")
 async def week_costs(message):
-    msg, costs, labels = usefull.getcosts_message_builder(message.from_user.id,
-                                                          start_date=message.date,
-                                                          weeks=1, keyword="неделю")
+    msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
+                                                         start_date=message.date,
+                                                         weeks=1, keyword="неделю")
     await message.answer(msg)
 
 
 @dp.message_handler(lambda message: message.text == "Траты за месяц")
 async def week_costs(message):
-    fig, ax = plt.subplots()
-    msg, costs, labels = usefull.getcosts_message_builder(message.from_user.id,
-                                                          start_date=message.date,
-                                                          months=1, keyword="месяц")
-    ax.pie(costs, labels=labels, autopct="%i%%")
-    picture_name = "pieresult{}{}.png".format(datetime.now(), message.from_user.id)
-    fig.savefig(picture_name)
+    msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
+                                                         start_date=message.date,
+                                                         months=1, keyword="месяц")
 
-    # await message.answer(msg)
-    await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+    if picture_name:
+        await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+    else:
+        await message.answer(msg)
 
 
 @dp.message_handler(lambda message: message.text == "Траты за год")
 async def week_costs(message):
-    fig, ax = plt.subplots()
-    msg, costs, labels = usefull.getcosts_message_builder(message.from_user.id,
-                                                          start_date=message.date,
-                                                          months=1, keyword="год")
+    msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
+                                                         start_date=message.date,
+                                                         months=1, keyword="год")
 
-    ax.pie(costs, labels=labels, autopct="%i%%")
-    picture_name = "pieresult{}{}.png".format(datetime.now(), message.from_user.id)
-    fig.savefig(picture_name)
-
-    await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+    if picture_name:
+        await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+    else:
+        await message.answer(msg)
 
 
 @dp.message_handler(lambda message: message.text == "Траты семьи")
 async def family_costs(message):
-    fig, ax = plt.subplots()
-    costs, labels = db.get_family_costs_statistic(message.from_user.id)
     family_id = db.get_user_family(message.from_user.id)
+    
     if family_id is None:
         await message.answer("У вас нет семьи. Создайте её с помощью комманды /familycreate или привяжитесь к другой с помощью линк-ссылки.")
     else:
-        msg = usefull.family_users_getstatistic(family_id)
+        msg, picture_name = usefull.family_users_getstatistic(family_id)
 
-        ax.pie(costs, labels=labels, autopct="%i%%")
-        picture_name = "pieresult{}{}.png".format(datetime.now(), message.from_user.id)
-        fig.savefig(picture_name)
-
-        await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+        if picture_name:
+            await message.answer_photo(photo=InputFile(picture_name), caption=msg)
+        else:
+            await message.answer(msg)
 
 
 @dp.message_handler()
