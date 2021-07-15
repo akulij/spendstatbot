@@ -49,6 +49,7 @@ async def start(message):
 
 
 @dp.message_handler(commands=["familylink"])
+@dbuserexists
 async def familylink(message):
     """Prints family's link to connect account to family"""
     link = usefull.generate_link(message.from_user.id)
@@ -59,27 +60,39 @@ async def familylink(message):
 
 
 @dp.message_handler(commands=["familyremove"])
+@dbuserexists
 async def familyremove(message):
     """Removes account from family"""
     username = usefull.parse_command(message.text)
-    status = db.remove_user_from_family(db.get_userid_by_nickname(username),
-                                        db.get_family_by_admin_id(message.from_user.id))
-    if status == "OK":
-        await message.answer("account removed successfully")
-    elif status == "NOTINFAMILY":
-        await message.answer("You are not admin in user's family")
-    elif status == "USERISADMIN":
-        await message.answer("Can't remove account if it is admin")
+    if username is None:
+        await message.answer("You need to specify nickname")
     else:
-        await message.answer("Can't remove account from this family")
+        user_id = db.get_userid_by_nickname(username)
+        if user_id is None:
+            await message.answer("Incorrect nickname")
+            return
+        status = db.remove_user_from_family(user_id,
+                                            db.get_family_by_admin_id(message.from_user.id))
+        if status == "OK":
+            await message.answer("account removed successfully")
+        elif status == "NOTINFAMILY":
+            await message.answer("You are not admin in user's family")
+        elif status == "USERISADMIN":
+            await message.answer("Can't remove account if it is admin")
+        else:
+            await message.answer("Can't remove account from this family")
 
 
 @dp.message_handler(commands=["familycreate"])
+@dbuserexists
 async def familycreate(message):
     """Creates family"""
     familyname = usefull.parse_command(message.text)
     if familyname is None:
         await message.answer("You need to specify family name like this:\n/familycreate FamilyName")
+    elif len(familyname) > 100:
+        await message.answer("Family name can't be longer than 100 chars")
+        return
     else:
         status = db.create_family(message.from_user.id, familyname)
         if status == "OK":
@@ -91,6 +104,7 @@ async def familycreate(message):
 
 
 @dp.message_handler(lambda message: message.text == "Траты за неделю")
+@dbuserexists
 async def week_costs(message):
     msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
                                                          start_date=message.date,
@@ -99,6 +113,7 @@ async def week_costs(message):
 
 
 @dp.message_handler(lambda message: message.text == "Траты за месяц")
+@dbuserexists
 async def week_costs(message):
     msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
                                                          start_date=message.date,
@@ -111,6 +126,7 @@ async def week_costs(message):
 
 
 @dp.message_handler(lambda message: message.text == "Траты за год")
+@dbuserexists
 async def week_costs(message):
     msg, picture_name = usefull.getcosts_message_builder(message.from_user.id,
                                                          start_date=message.date,
@@ -123,6 +139,7 @@ async def week_costs(message):
 
 
 @dp.message_handler(lambda message: message.text == "Траты семьи")
+@dbuserexists
 async def family_costs(message):
     family_id = db.get_user_family(message.from_user.id)
     
@@ -143,6 +160,12 @@ async def parser(message):
     """Parses message for adding costs, etc"""
     message_type, parsed_msg = usefull.parse_message(message.text)
     if message_type == "add_cost":
+        if len(parsed_msg["buy_type"]) > 30:
+            await message.answer("Type of cost can't be longer than 30 chars")
+            return
+        if len(parsed_msg["description"]) > 255:
+            await message.answer("Description of cost can't be longer than 255 chars")
+            return
         error = db.add_cost(message.from_user.id, parsed_msg["cost"],
                             parsed_msg["buy_type"], parsed_msg["description"],
                             str(message.date))

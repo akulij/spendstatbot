@@ -13,6 +13,10 @@ engine = create_engine("postgresql://{user}:{password}@{ip}:{port}/{dbname}"
 conn = engine.connect()
 
 
+def screen(text):
+    return "''".join(str(text).split("'"))
+
+
 def user_in_db(user_id):
     df = pd.read_sql("SELECT * FROM users WHERE user_id = {}".format(user_id), conn)
     if len(df):
@@ -22,12 +26,11 @@ def user_in_db(user_id):
 
 
 def add_new_user(user_id, nickname):
-    conn.execute("INSERT INTO users(user_id, nickname) values ({user_id}, '{nickname}')"
-                 .format(user_id=user_id, nickname=nickname))
+    conn.execute(f"INSERT INTO users(user_id, nickname) values ({user_id}, '{screen(nickname)}')")
 
 
 def get_username(user_id):
-    usernames = pd.from_sql("SELECT * FROM users WHERE user_id = {}".format(user_id))
+    usernames = pd.read_sql("SELECT * FROM users WHERE user_id = {}".format(user_id))
     return usernames["username"][0]
 
 
@@ -103,7 +106,7 @@ def create_family(user_id, familyname):
                            WHERE creator_id = {user_id}", conn)
     if len(families["creator_id"]) == 0:
         conn.execute(f"INSERT INTO families(creator_id, name) values \
-                 ({user_id}, '{familyname}')")
+                 ({user_id}, '{screen(familyname)}')")
         conn.execute(f"UPDATE users SET family_id = \
                      (SELECT id FROM families WHERE creator_id = {user_id}) \
                      WHERE user_id = {user_id}")
@@ -114,7 +117,7 @@ def create_family(user_id, familyname):
 
 def link_user_to_family(user_id, ref_part):
     conn.execute(f"UPDATE users SET family_id = (SELECT family_id FROM links \
-                  WHERE ref_part = '{ref_part}') WHERE user_id = {user_id}")
+                  WHERE ref_part = '{screen(ref_part)}') WHERE user_id = {user_id}")
 
 
 def get_user_family(user_id):
@@ -125,15 +128,17 @@ def get_user_family(user_id):
 
 def get_family_by_admin_id(user_id):
     family_id = pd.read_sql(f"SELECT id FROM families \
-                            WHERE creator_id = {user_id}", conn)["id"][0]
-    return family_id
+                            WHERE creator_id = {user_id}", conn)["id"]
+    if len(family_id):
+        return family_id[0]
+    else:
+        return None
 
 
 def add_cost(user_id, cost, buy_type, description, data):
-    conn.execute("INSERT INTO costs(user_id, cost, type, description, data) values \
-                 ({user_id}, {cost}, '{type}', '{description}', '{data}')".format(
-                 user_id=user_id, cost=cost,
-                 type=buy_type, description=description, data=data))
+    conn.execute(f"INSERT INTO costs(user_id, cost, type, description, data) values \
+                 ({screen(user_id)}, {cost}, '{screen(buy_type)}',\
+                 '{screen(description)}', '{screen(data)}')")
     return "OK"
 
 
@@ -150,6 +155,8 @@ def get_family_name(user_id):
 
 
 def remove_user_from_family(user_id, family_id):
+    if family_id is None:
+        return "INCORRECTFID"
     if get_user_family(user_id) == family_id:
         creator_id = pd.read_sql(f"SELECT creator_id FROM families \
                                  WHERE id = {family_id}", conn)["creator_id"][0]
@@ -163,6 +170,9 @@ def remove_user_from_family(user_id, family_id):
 
 
 def get_userid_by_nickname(nickname):
-    user_id = pd.read_sql(f"SELECT user_id FROM users WHERE nickname = '{nickname}'",
-                          conn)["user_id"][0]
-    return user_id
+    user_id = pd.read_sql(f"SELECT user_id FROM users WHERE nickname = '{screen(nickname)}'",
+                          conn)["user_id"]
+    if len(user_id):
+        return user_id[0]
+    else:
+        return None
