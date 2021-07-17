@@ -14,10 +14,12 @@ conn = engine.connect()
 
 
 def screen(text):
+    """Screens apostrophe to eliminate SQL injections"""
     return "''".join(str(text).split("'"))
 
 
 def user_in_db(user_id):
+    """True if user exists in database, else False"""
     df = pd.read_sql("SELECT * FROM users WHERE user_id = {}".format(user_id), conn)
     if len(df):
         return True
@@ -26,15 +28,18 @@ def user_in_db(user_id):
 
 
 def add_new_user(user_id, nickname):
+    """Adds user to database"""
     conn.execute(f"INSERT INTO users(user_id, nickname) values ({user_id}, '{screen(nickname)}')")
 
 
 def get_username(user_id):
+    """Returns username by id"""
     usernames = pd.read_sql("SELECT * FROM users WHERE user_id = {}".format(user_id))
     return usernames["username"][0]
 
 
 def get_interval_costs(user_id, start_time, weeks=0, months=0, years=0):
+    """Returns all user costs by interval"""
     costs = pd.read_sql("SELECT * FROM costs WHERE user_id = %s AND data >= %s \
                         ORDER BY cost desc LIMIT 21",
                         conn,
@@ -46,6 +51,7 @@ def get_interval_costs(user_id, start_time, weeks=0, months=0, years=0):
 
 
 def get_interval_sum(user_id, start_time, weeks=0, months=0, years=0):
+    """Returns summary of all user costs by interval"""
     sums = pd.read_sql("SELECT sum(cost) FROM costs WHERE user_id = %s \
                        AND data >= %s GROUP BY user_id",
                        conn,
@@ -60,6 +66,7 @@ def get_interval_sum(user_id, start_time, weeks=0, months=0, years=0):
 
 
 def get_costs_statistic(user_id, start_time, weeks=0, months=0, years=0):
+    """Returns statistic of all user costs by interval in format: (costs, type_of_cost)"""
     df = pd.read_sql("SELECT type, sum(cost) as cost FROM costs \
                      WHERE user_id = %s AND data >= %s GROUP BY type", conn,
                      params=(user_id, str(start_time - relativedelta(weeks=weeks,
@@ -69,6 +76,7 @@ def get_costs_statistic(user_id, start_time, weeks=0, months=0, years=0):
 
 
 def get_family_costs_statistic(family_id):
+    """Returns statistic of family costs by interval in format: (costs, type_of_cost)"""
     month_period = str(datetime.now() - relativedelta(months=1))
     costs = pd.read_sql(f"SELECT sum(cost) as cost, type FROM costs \
                         LEFT JOIN users ON costs.user_id = users.user_id \
@@ -79,6 +87,7 @@ def get_family_costs_statistic(family_id):
 
 
 def get_users_infamily_sums(family_id):
+    """Returns summary of costs by user in format: (costs, nicknames)"""
     month_period = str(datetime.now() - relativedelta(months=1))
     users_costs = pd.read_sql(f"SELECT sum(cost) as cost, nickname FROM costs \
                               LEFT JOIN users ON costs.user_id = users.user_id \
@@ -89,6 +98,7 @@ def get_users_infamily_sums(family_id):
 
 
 def get_family_total_in_month(family_id):
+    """Returns all costs summary by users in family"""
     month_period = str(datetime.now() - relativedelta(months=1))
     total = pd.read_sql(f"SELECT sum(cost) as cost, family_id FROM costs \
                         LEFT JOIN users ON costs.user_id = users.user_id \
@@ -143,11 +153,13 @@ def add_cost(user_id, cost, buy_type, description, data):
 
 
 def append_family_link(family_id, ref_part):
+    """Adds ref_part of link to database"""
     conn.execute(f"INSERT INTO links(family_id, ref_part) \
                  values ({family_id}, '{ref_part}')")
 
 
 def get_family_name(user_id):
+    """Returns user's family name"""
     raw_data = pd.read_sql("SELECT families.name FROM users \
                            LEFT JOIN families ON users.family_id = families.id \
                            WHERE user_id = %s", conn, params=(user_id,))

@@ -23,17 +23,12 @@ hello_msg = """
 
 
 def dbuserexists(fn):
+    """Decorator for check existing user in database before function execution"""
     async def wrapper(message):
         if not db.user_in_db(message.from_user.id):
             db.add_new_user(message.from_user.id, message.from_user.username)
         await fn(message)
     return wrapper
-
-
-def removed(fn):
-    async def removed_func(message):
-        print(f"Function {fn.__name__} was removed, use another instead")
-    return removed_func
 
 
 @dp.message_handler(commands=["start"])
@@ -142,7 +137,7 @@ async def week_costs(message):
 @dbuserexists
 async def family_costs(message):
     family_id = db.get_user_family(message.from_user.id)
-    
+
     if family_id is None:
         await message.answer("У вас нет семьи. Создайте её с помощью комманды /familycreate или привяжитесь к другой с помощью линк-ссылки.")
     else:
@@ -157,7 +152,7 @@ async def family_costs(message):
 @dp.message_handler()
 @dbuserexists
 async def parser(message):
-    """Parses message for adding costs, etc"""
+    """Parses message for adding costs"""
     message_type, parsed_msg = usefull.parse_message(message.text)
     if message_type == "add_cost":
         if len(parsed_msg["buy_type"]) > 30:
@@ -173,6 +168,8 @@ async def parser(message):
             await message.answer("Чек успешно добавлен")
         else:
             await message.answer("Невозможно добавить чек")
+    else:
+        await message.answer("Неизвестная команда. \nПожалуйста, нажмите на одну из кнопок или введите покупку в формате (сумма) (категория) (описание)")
 
 
 if __name__ == "__main__":

@@ -58,7 +58,7 @@ def getcosts_message_builder(user_id, keyword, start_date, weeks=0, months=0, ye
         message += "Всего потрачено за {}: {}руб.".format(keyword, week_sum)
         fig, ax = plt.subplots()
         ax.pie(costs, labels=labels, autopct="%i%%")
-        picture_name = "pieresult{}{}.png".format(datetime.now(), user_id)
+        picture_name = "images/pieresult{}{}.png".format(datetime.now(), user_id)
         fig.savefig(picture_name)
 
     return message, picture_name
@@ -78,7 +78,7 @@ def family_users_getstatistic(family_id):
         fig, ax = plt.subplots()
         costs, labels = db.get_family_costs_statistic(family_id)
         ax.pie(costs, labels=labels, autopct="%i%%")
-        picture_name = "pieresult{}{}.png".format(datetime.now(), family_id)
+        picture_name = "images/pieresult{}{}.png".format(datetime.now(), family_id)
         fig.savefig(picture_name)
     return message, picture_name
 

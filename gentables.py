@@ -14,6 +14,7 @@ CREATE TABLE costs(
     data timestamp
 )
 """)
+
 conn.execute("""
 CREATE TABLE families(
     id SERIAL PRIMARY KEY,
@@ -21,6 +22,7 @@ CREATE TABLE families(
     name varchar(100)
 )
 """)
+
 conn.execute("""
 CREATE TABLE users(
     id SERIAL PRIMARY KEY,
@@ -29,6 +31,7 @@ CREATE TABLE users(
     family_id integer
 )
 """)
+
 conn.execute("""
 CREATE TABLE links(
     id SERIAL PRIMARY KEY,

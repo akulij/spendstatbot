@@ -2,14 +2,14 @@
 ###### Language: Python  
 ###### Libraries: aiogram, pandas, sqlalchemy, matplotlib
 ## Features:
-### 1.Adding costs
+### 1.Adding spending
 ![Cost adding](images/1costs_adding.png)
-### 2. Graphical costs view by category
+### 2. View spending as pie charts
 ![Costs pie graph](images/2pie_view.png)
-### 3. Family costs support
+### 3. Support for family spending
 ![Family costs](images/3family_support.png)
-## Before geting started
-You need to setup a PostgreSQL server firstly  
+## Before the beginning
+First you need to install the PostgreSQL server  
 
 For Arch Linux:
 ```
@@ -43,4 +43,3 @@ To start bot just enter:
 ```
 make
 ```
-
