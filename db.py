@@ -21,7 +21,7 @@ def screen(text):
 def user_in_db(user_id):
     """True if user exists in database, else False"""
     df = pd.read_sql("SELECT * FROM users WHERE user_id = {}".format(user_id), conn)
-    if len(df):
+    if df.size:
         return True
     else:
         return False
@@ -59,8 +59,8 @@ def get_interval_sum(user_id, start_time, weeks=0, months=0, years=0):
                                str(start_time - relativedelta(weeks=weeks,
                                                               months=months,
                                                               years=years))))
-    if len(sums["sum"]):
-        return sums["sum"].iloc[0]
+    if sums["sum"].size:
+        return sums.loc[0, "sum"]
     else:
         return None
 
@@ -105,7 +105,7 @@ def get_family_total_in_month(family_id):
                         WHERE family_id = {family_id} \
                         AND costs.data >= '{month_period}' \
                         GROUP BY family_id ORDER BY cost DESC", conn)["cost"]
-    if len(total):
+    if total.size:
         return total.iloc[0]
     else:
         return None
@@ -114,15 +114,15 @@ def get_family_total_in_month(family_id):
 def create_family(user_id, familyname):
     families = pd.read_sql(f"SELECT * FROM families \
                            WHERE creator_id = {user_id}", conn)
-    if len(families["creator_id"]) == 0:
+    if families["creator_id"].size:
+        return "EXISTS"
+    else:
         conn.execute(f"INSERT INTO families(creator_id, name) values \
                  ({user_id}, '{screen(familyname)}')")
         conn.execute(f"UPDATE users SET family_id = \
                      (SELECT id FROM families WHERE creator_id = {user_id}) \
                      WHERE user_id = {user_id}")
         return "OK"
-    else:
-        return "EXISTS"
 
 
 def link_user_to_family(user_id, ref_part):
@@ -132,14 +132,14 @@ def link_user_to_family(user_id, ref_part):
 
 def get_user_family(user_id):
     family_id = pd.read_sql(f"SELECT family_id as fid FROM users \
-                            WHERE user_id = {user_id}", conn)["fid"].iloc[0]
+                            WHERE user_id = {user_id}", conn).loc[0, "fid"]
     return family_id
 
 
 def get_family_by_admin_id(user_id):
     family_id = pd.read_sql(f"SELECT id FROM families \
                             WHERE creator_id = {user_id}", conn)["id"]
-    if len(family_id):
+    if family_id.size:
         return family_id.iloc[0]
     else:
         return None
@@ -163,7 +163,7 @@ def get_family_name(user_id):
     raw_data = pd.read_sql("SELECT families.name FROM users \
                            LEFT JOIN families ON users.family_id = families.id \
                            WHERE user_id = %s", conn, params=(user_id,))
-    return raw_data["name"].iloc[0]
+    return raw_data.loc[0, "name"]
 
 
 def remove_user_from_family(user_id, family_id):
@@ -184,7 +184,7 @@ def remove_user_from_family(user_id, family_id):
 def get_userid_by_nickname(nickname):
     user_id = pd.read_sql(f"SELECT user_id FROM users WHERE nickname = '{screen(nickname)}'",
                           conn)["user_id"]
-    if len(user_id):
+    if user_id.size:
         return user_id.iloc[0]
     else:
         return None

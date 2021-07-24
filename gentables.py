@@ -40,4 +40,6 @@ CREATE TABLE links(
 )
 """)
 
+conn.execute("CREATE INDEX costs_cost_idx ON costs(user_id, cost DESC)")
+
 conn.close()
