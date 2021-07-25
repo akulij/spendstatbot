@@ -3,12 +3,12 @@ from aiogram.types import InputFile, InlineKeyboardMarkup, InlineKeyboardButton
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from config import botkey, botname
+from config import BOT_TOKEN, BOTNAME
 import db
 import kbds
 import usefull
 
-bot = Bot(token=botkey)
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 hello_msg = """
 Это бот для слежения за своими тратами.
@@ -51,7 +51,7 @@ async def familylink(message):
     if link is None:
         await message.answer("You is not in family")
     else:
-        await message.answer(f"Your link: t.me/{botname}?start={link}")
+        await message.answer(f"Your link: t.me/{BOTNAME}?start={link}")
 
 
 @dp.message_handler(commands=["familyremove"])

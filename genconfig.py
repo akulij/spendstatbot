@@ -28,14 +28,14 @@ if not password:
             break
 
 blank = f"""
-botkey = "{botkey}"
-botname = "{botname}"
-ip = "{ip}"
-port = "{port}"
-user = "tgbot"
-password = "{password}"
-dbname = "spendbot"
-salt = "{''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))}"
+BOT_TOKEN = "{botkey}"
+BOTNAME = "{botname}"
+SERVER_IP = "{ip}"
+SERVER_PORT = "{port}"
+DB_USER = "tgbot"
+DB_PASSWORD = "{password}"
+DB_NAME = "spendbot"
+SALT = "{''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))}"
 """
 
 config = open("config.py", "w")

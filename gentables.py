@@ -1,7 +1,7 @@
 from config import *
 from sqlalchemy import create_engine
 
-engine = create_engine(f"postgresql://{user}:{password}@{ip}:{port}/{dbname}")
+engine = create_engine(f"postgresql://{DB_USER}:{DB_PASSWORD}@{SERVER_IP}:{SERVER_PORT}/{DB_NAME}")
 conn = engine.connect()
 
 conn.execute("""

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from random import randbytes
 
 import db
-from config import salt
+from config import SALT
 
 
 def parse_message(text):
@@ -33,7 +33,7 @@ def generate_link(user_id):
     family_name = db.get_family_name(user_id)
     if family_name is None:
         return None
-    data = family_name + salt + str(time_ns())
+    data = family_name + SALT + str(time_ns())
     hash_result = sha256(data.encode("utf-8") + randbytes(10)).hexdigest()
     db.append_family_link(db.get_user_family(user_id), hash_result)
     return hash_result

@@ -6,9 +6,9 @@ from datetime import datetime
 import config
 
 engine = create_engine("postgresql://{user}:{password}@{ip}:{port}/{dbname}"
-                       .format(user=config.user, password=config.password,
-                               ip=config.ip, port=config.port,
-                               dbname=config.dbname))
+                       .format(user=config.DB_USER, password=config.DB_PASSWORD,
+                               ip=config.SERVER_IP, port=config.SERVER_PORT,
+                               dbname=config.DB_NAME))
 
 conn = engine.connect()
 
